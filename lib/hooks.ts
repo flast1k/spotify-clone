@@ -3,7 +3,10 @@ import useSWR from 'swr'
 import { fetcher } from './fetcher'
 
 export const useMe = () => {
-  const { data, error } = useSWR<User>('/me', fetcher)
+  const { data, error } = useSWR<User & { playlistsCount: number }>(
+    '/me',
+    fetcher
+  )
 
   return {
     user: data,
