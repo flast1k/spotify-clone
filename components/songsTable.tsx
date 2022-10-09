@@ -28,6 +28,23 @@ export const SongsTable = ({ songs }) => {
               </Th>
             </Tr>
           </Thead>
+          <Tbody>
+            {songs.map((song, i) => (
+              <Tr
+                sx={{
+                  transition: 'all .3s',
+                  '&:hover': { bg: 'rgba(255,255,255, 0.1)' },
+                }}
+                key={song.id}
+                cursor="cursor"
+              >
+                <Td>{i + 1}</Td>
+                <Td>{song.name}</Td>
+                <Td>{song.createdAt.toString()}</Td>
+                <Td>{song.duration}</Td>
+              </Tr>
+            ))}
+          </Tbody>
         </Table>
       </Box>
     </Box>
