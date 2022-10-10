@@ -23,12 +23,14 @@ import {
 import { useStoreActions } from 'easy-peasy'
 
 export const Player = ({ songs, activeSong }) => {
-  const [playing, setPlaying] = useState(true)
+  const [playing, setPlaying] = useState(false)
   const [index, setIndex] = useState(0)
   const [seek, setSeek] = useState(0.0)
+  const [isSeeking, setIsSeeking] = useState(false)
   const [repeat, setRepeat] = useState(false)
   const [shuffle, setShuffle] = useState(false)
   const [duration, setDuration] = useState(0.0)
+  const soundRef = useRef(null)
 
   const setPlayState = (value) => {
     setPlaying(value)
@@ -42,10 +44,59 @@ export const Player = ({ songs, activeSong }) => {
     setRepeat((state) => !state)
   }
 
+  const prevSong = () => {
+    setIndex((state) => {
+      return state ? state - 1 : songs.length - 1
+    })
+  }
+
+  const nextSong = () => {
+    setIndex((state) => {
+      if (shuffle) {
+        const next = Math.floor(Math.random() * songs.length)
+
+        if (next === state) {
+          nextSong()
+          return
+        }
+
+        return next
+      }
+
+      return state === songs.length - 1 ? 0 : state + 1
+    })
+  }
+
+  const onEnd = () => {
+    if (repeat) {
+      setSeek(0)
+      soundRef.current.seek(0)
+    } else {
+      nextSong()
+    }
+  }
+
+  const onLoad = () => {
+    const songDuration = soundRef.current.duration()
+    setDuration(songDuration)
+  }
+
+  const onSeek = (e) => {
+    const parsedSeek = parseFloat(e[0])
+    setSeek(parsedSeek)
+    soundRef.current.seek(parsedSeek)
+  }
+
   return (
     <Box>
       <Box>
-        <ReactHowler playing={playing} src={activeSong?.url} />
+        <ReactHowler
+          ref={soundRef}
+          playing={playing}
+          src={activeSong?.url}
+          onLoad={onLoad}
+          onEnd={onEnd}
+        />
       </Box>
       <Center color="gray.600">
         <ButtonGroup>
@@ -62,6 +113,7 @@ export const Player = ({ songs, activeSong }) => {
             outline="none"
             variant="link"
             aria-label="skip"
+            onClick={prevSong}
             fontSize="24px"
             icon={<MdSkipPrevious />}
           />
@@ -91,6 +143,7 @@ export const Player = ({ songs, activeSong }) => {
             variant="link"
             aria-label="next"
             fontSize="24px"
+            onClick={nextSong}
             icon={<MdSkipNext />}
           />
           <IconButton
@@ -114,7 +167,11 @@ export const Player = ({ songs, activeSong }) => {
               aria-label={['min', 'max']}
               step={0.1}
               min={0}
-              max={321}
+              max={duration ?? 0}
+              onChange={onSeek}
+              value={[seek]}
+              onChangeStart={() => setIsSeeking(true)}
+              onChangeEnd={() => setIsSeeking(false)}
               id="player-range"
             >
               <RangeSliderTrack bg="gray.800">
